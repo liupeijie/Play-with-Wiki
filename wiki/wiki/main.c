@@ -13,6 +13,14 @@
 #define SIZE2 1483277       //pages.txtの総行数
 
 #define WORD_LENGTH 1000     //wikipediaの見出し語の長さ
+#include <sys/time.h>
+
+double get_time()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
 
 typedef struct data_t1{
     int id;                 //ページのid
@@ -101,16 +109,17 @@ void read_pagefile(char *filename){ /*ファイルからページ情報を読み
 
 
 int main(void){
+    double begin = get_time();
     n=-1;    //table1[0]からデータを入れるために-1に初期化
-    read_linkfile("links.txt"); //リンク情報を読み込む
+    read_linkfile("/Users/liupeijie/kadai3/wiki/wiki/links.txt"); //リンク情報を読み込む
     m=-1;   //table2[0]からデータを入れるために-1に初期化
-    read_pagefile("pages.txt"); //ページ情報を読み込む
+    read_pagefile("/Users/liupeijie/kadai3/wiki/wiki/pages.txt"); //ページ情報を読み込む
     int i;
     for(i=0;i<SIZE1;i++){   /*全てのリンク関係について*/
         num_linked[table1[i].linked]+=1;    //被リンク数を数える
     }
     int max=0;
-    int id;
+    int id = 0;
     for(i=0;i<SIZE2;i++){
         if(max<num_linked[i]){
             max=num_linked[i];
@@ -118,4 +127,6 @@ int main(void){
         }
     }
     printf("%s\n",table2[id].word);
+    double end = get_time();
+    printf("time: %.6lf sec\n", end - begin);
 }
