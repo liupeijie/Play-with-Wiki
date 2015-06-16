@@ -1,116 +1,113 @@
-// Don't forget to add the '-lm' option to link math.h.
-// $ gcc pagerank.c -lm
-#include <math.h>
+/*find most linked page*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#define SIZE1 52973671      //links.txtの総行数
+#define SIZE2 1483277       //pages.txtの総行数
 
-#define LINK_MAX 4552836 // links.txtの総行数
-#define PAGE_MAX 229894  // pages.txtの総行数
+#define WORD_LENGTH 1000     //wikipediaの見出し語の長さ
 
-typedef struct link_t {
-    int src_id; // リンク元のページのid
-    int dst_id; // リンク先のページのid
-} link_t;
+typedef struct data_t1{
+    int id;                 //ページのid
+    int linked;             //リンクされているページのid
+}data_type1;
 
-typedef struct page_t {
-    int id;          // ページのid
-    char* word;      // ページの見出し語
-    int linking_num; // このページから出ているリンク数
-    int linked_num;  // このページへ入ってくるリンク数
-    double pagerank; // ページランク
-} page_t;
-
-link_t links[LINK_MAX]; // 大きさLINK_MAXの配列を宣言
-page_t pages[PAGE_MAX]; // 大きさPAGE_MAXの配列を宣言
-
-int link_num = 0; // リンク情報はlinks[link_num]まで
-int page_num = 0; // ページ情報はpages[page_num]まで
-
-void category_nums()
-{
+typedef struct data_t2{
     int id;
-    for (id = 0; id < page_num; id++) {
-        printf("%d\n", pages[id].linked_num);
-    }
-    
-}
+    char *word;
+}data_type2;
 
-void insert_link(int src_id, int dst_id) { // linksの最後にデータを追加する
-    if (link_num < LINK_MAX) { // linksに空きがあるなら
-        links[link_num].src_id = src_id;
-        links[link_num].dst_id = dst_id;
-        link_num++;
-    } else {
-        printf("テーブルがいっぱいです。ごめんなさい。\n");
+data_type1 table1[SIZE1];     //大きさSIZE1の配列を宣言
+data_type2 table2[SIZE2];     //大きさSIZE2の配列を宣言
+
+int num_linked[SIZE2]={0};  //被リンク数を格納する配列を宣言、0で初期化
+
+int n;                      //リンク情報数
+int m;                      //ページ情報数
+
+void insert_linkend(int id,int linked){ /*table1の最後にデータを追加する*/
+    if(n<SIZE1-1){  /*table1に空きがあるなら*/
+        table1[n+1].id=id;
+        table1[n+1].linked=linked;
+        n++;
+    }else{
+        printf("テーブルがいっぱいです\n");
         exit(1);
     }
 }
 
-void insert_page(int id, char* word) { // pagesの最後にデータを追加する
-    if (page_num < PAGE_MAX) { // pagesに空きがあるなら
-        pages[page_num].id = id;
-        pages[page_num].word = word;
-        pages[page_num].linking_num = 0;
-        pages[page_num].linked_num = 0;
-        pages[page_num].pagerank = 0;
-        page_num++;
-    } else {
-        printf("テーブルがいっぱいです。ごめんなさい。\n");
+void insert_pageend(int id,char *word){ /*table2の最後にデータを追加する*/
+    if(m<SIZE2-1){  /*table2に空きがあるなら*/
+        table2[m+1].id=id;
+        table2[m+1].word=word;
+        m++;
+    }else{
+        printf("テーブルがいっぱいです\n");
         exit(1);
     }
 }
 
-void read_linkfile(char *filename) { // ファイルからリンク情報を読み込む
-    FILE* file = fopen(filename, "r");  // ファイルを読み込み専用で開く
-    if (file == NULL) { // ファイルが見つからなかったら
-        printf("がんばってはみましたが、ファイル%sは見つかりませんでした\n", filename);
-        exit(1); // エラーを出して終了
-    }
+void read_linkfile(char *filename){ /*ファイルからリンク情報を読み込む*/
+    FILE *file;
+    int id,linked;
+    int r;
     
-    while (1) {
-        int src_id, dst_id;
-        int ret = fscanf(file, "%d\t%d\n", &src_id, &dst_id); // 1行リンク情報を読み込む
-        if (ret == EOF) { // ファイルの終わりなら
-            fclose(file); // ファイルを閉じて
-            return; // 終了
-        } else { // データがあったなら
-            insert_link(src_id, dst_id); // それを追加して読み込みを続ける
+    file=fopen(filename,"r");   //ファイルを読み込み専用で開く
+    if(file==NULL){ /*ファイルが見つからなかったら*/
+        printf("ファイル%sが見つかりません\n",filename);
+        exit(1);    //エラーを出して終了
+    }
+    while(1){
+        r=fscanf(file,"%d\t%d\n",&id,&linked);  //1行リンク情報を読み込む
+        if(r==EOF){ /*ファイルの終わりなら*/
+            fclose(file);   //ファイルを閉じて
+            return; //終了
+        }else{  /*データがあったなら*/
+            insert_linkend(id,linked);  //それを追加して読み込みを続ける
         }
     }
 }
 
-void read_pagefile(char *filename) { // ファイルからページ情報を読み込む
-    FILE* file = fopen(filename, "r"); // ファイルを読み込み専用で開く
-    if (file == NULL) { // ファイルが見つからなかったら
-        printf("がんばってはみましたが、ファイル%sは見つかりませんでした\n", filename);
-        exit(1); // エラーを出して終了
-    }
+void read_pagefile(char *filename){ /*ファイルからページ情報を読み込む*/
+    FILE *file;
+    int id;
+    char *word;
+    int r;
     
-    while (1) {
-        int id;
-        char buffer[1024];
-        int ret = fscanf(file, "%d\t%1023s\n", &id, buffer); // 1行、ページ情報を読み込む
-        if (ret == EOF) { // ファイルの終わりなら
-            fclose(file); // ファイルを閉じて
-            return; // 終了
-        } else { // データがあったなら
-            int length = strlen(buffer);
-            if (length == 1023) {
-                printf("なんか見出し語が長すぎ\n");
-                exit(1);
-            }
-            char* word = (char*)malloc(length + 1); // 見出し語を格納するメモリを確保
-            strcpy(word, buffer);
-            insert_page(id, word); // それを追加して読み込みを続ける
+    file=fopen(filename,"r");   //ファイルを読み込み専用で開く
+    if(file==NULL){ /*ファイルが見つからなかったら*/
+        printf("ファイル%sが見つかりません\n",filename);
+        exit(1);    //エラーを出して終了
+    }
+    while(1){
+        word=(char *)malloc(WORD_LENGTH);   //見出し語を格納するメモリを確保
+        r=fscanf(file,"%d\t%s\n",&id,word); //1行、ページ情報を読み込む
+        if(r==EOF){ /*ファイルの終わりなら*/
+            fclose(file);   //ファイルを閉じて
+            return; //終了
+        }else{  /*データがあったなら*/
+            insert_pageend(id,word);    //それを追加して読み込みを続ける
         }
     }
+    
 }
 
-int main(void) {
-    read_linkfile("cat_link.txt"); // リンク情報を読み込む
-    read_pagefile("cats.txt"); // ページ情報を読み込む
-    
-    category_nums();
-    return 0;
+
+int main(void){
+    n=-1;    //table1[0]からデータを入れるために-1に初期化
+    read_linkfile("/Users/liupeijie/kadai3/category/category/links.txt"); //リンク情報を読み込む
+    m=-1;   //table2[0]からデータを入れるために-1に初期化
+    read_pagefile("/Users/liupeijie/kadai3/category/category/pages.txt"); //ページ情報を読み込む
+    int i;
+    for(i=0;i<SIZE1;i++){   /*全てのリンク関係について*/
+        num_linked[table1[i].linked]+=1;    //被リンク数を数える
+    }
+    int max=0;
+    int id;
+    for(i=0;i<SIZE2;i++){
+        if(max<num_linked[i]){
+            max=num_linked[i];
+            id=i;
+        }
+    }
+    printf("%d:%d\n",id,table2[id].id);
 }

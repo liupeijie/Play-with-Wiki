@@ -33,7 +33,7 @@ typedef struct data_t2{
 }data_type2;
 
 data_type1 table1[SIZE1];     //大きさSIZE1の配列を宣言
-data_type2 table2[SIZE2];     //大きさSIZE2の配列を宣言
+data_type2 table2[7852561];     //大きさSIZE2の配列を宣言
 
 int num_classified[SIZE2]={0};  //被リンク数を格納する配列を宣言、0で初期化
 
@@ -45,6 +45,7 @@ void insert_linkend(int page_id,int classified){ /*table1の最後にデータ�
     if(n<SIZE1-1){  /*table1に空きがあるなら*/
         table1[n+1].page_id=page_id;
         table1[n+1].classified=classified;
+        
         n++;
     }else{
         printf("テーブルがいっぱいです\n");
@@ -56,8 +57,9 @@ void insert_pageend(int classified,char *name){ /*table2の最後にデータを
 
    
         if(m<SIZE2-1){  /*table2に空きがあるなら*/
-            table2[m+1].classified=classified;
-            table2[m+1].name=name;
+            table2[classified].classified=classified;
+            table2[classified].name=name;
+            //printf("%d:%d",m,table2[m+1].classified);
             m++;
         }else{
             printf("テーブルがいっぱいです\n");
@@ -127,7 +129,7 @@ int main(void){
     m=-1;   //table2[0]からデータを入れるために-1に初期化
     read_pagefile("/Users/liupeijie/kadai3/category/category/cats.txt"); //ページ情報を読み込む
     int i;
-    for(i=0;i<SIZE1;i++){   /*全てのリンク関係について*/
+    for(i=1;i<SIZE1;i++){   /*全てのリンク関係について*/
         
         num_classified[table1[i].classified]+=1;    //カテゴリの中の数を数える
         
@@ -135,15 +137,17 @@ int main(void){
    // printf("%d",i);
     int max=0;
     int id = 0;
-    for(i=0;i<SIZE2;i++){
+    for(i=1;i<SIZE2;i++){
         if(max<num_classified[i] ){
             max=num_classified[i];
             id=i;
-            printf("%d\n",i);
+         //   printf("%d\n",i);
         }
     }
-    
-    printf("top is %d:%d\n",id,table2[id].classified);
+    for(i=1;i<SIZE2;i++){
+       // printf("id is %d:%d %s\n",i,table2[i-1].classified,table2[i-1].name);
+    }
+   printf("top is %d:%s\n",id,table2[id].name);
     double end = get_time();
     printf("time: %.6lf sec\n", end - begin);
 }
