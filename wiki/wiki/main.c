@@ -130,7 +130,7 @@ int main(void){
     int count=0;
     int a[5000];
     int id[SIZE2];
-    for(i=0;i<SIZE2;i++){ //for all pages
+    for(i=0;i<SIZE3;i++){ //for all pages
         if(num_classified[i]>150){
             a[count]=num_classified[i];
             id[count]=i;
