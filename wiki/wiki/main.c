@@ -130,8 +130,9 @@ int main(void){
     int count=0;
     int a[5000];
     int id[SIZE2];
+    printf("ページ数が5000以上のカテゴリ：\n");
     for(i=0;i<SIZE3;i++){ //for all pages
-        if(num_classified[i]>150){
+        if(num_classified[i]>5000){
             a[count]=num_classified[i];
             id[count]=i;
             count+=1;
@@ -152,16 +153,14 @@ int main(void){
             }
         }
     }
+     printf("ページ数が多い順のカテゴリランキング：\n");
     for(i=0;i<20;i++){
         k=id[i];
         rank=i;
         printf("rank%d ",rank+1);
-        printf("%s、数は：%d\n",table2[k].name,a[i]);
+        printf("%s  %d pages\n",table2[k].name,a[i]);
     }
 
-  //  }
-   
-  // printf("top is %d:%s,数：%d\n",id,table2[id].name,num_classified[id]);
     double end = get_time();
     printf("programing running time: %.6lf sec\n", end - begin);
 }
