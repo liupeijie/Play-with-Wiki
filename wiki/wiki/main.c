@@ -12,7 +12,7 @@
 #define SIZE1 4552836      //cat_link.txtの総行数
 #define SIZE2 229894       //cats.txtの総行数
 
-#define WORD_LENGTH 1000     //wikipediaの見出し語の長さ
+#define WORD_LENGTH 5000     //wikipediaの見出し語の長さ
 #include <sys/time.h>
 
 double get_time()
@@ -54,23 +54,13 @@ void insert_linkend(int page_id,int classified){ /*table1の最後にデータ�
 }
 
 void insert_pageend(int classified,char *name){ /*table2の最後にデータを追加する*/
-
-   
-        if(m<SIZE2-1){  /*table2に空きがあるなら*/
             table2[classified].classified=classified;
             table2[classified].name=name;
-            //printf("%d:%d",m,table2[m+1].classified);
-            m++;
-        }else{
-            printf("テーブルがいっぱいです\n");
-            exit(1);
-        }
-    
 }
 
 void read_linkfile(char *filename){ /*ファイルからリンク情報を読み込む*/
     FILE *file;
-    int id,linked;
+    int page_id,classified;
     int r;
     
     file=fopen(filename,"r");   //ファイルを読み込み専用で開く
@@ -79,12 +69,12 @@ void read_linkfile(char *filename){ /*ファイルからリンク情報を読み
         exit(1);    //エラーを出して終了
     }
     while(1){
-        r=fscanf(file,"%d\t%d\n",&id,&linked);  //1行リンク情報を読み込む
+        r=fscanf(file,"%d\t%d\n",&page_id,&classified);  //1行リンク情報を読み込む
         if(r==EOF){ /*ファイルの終わりなら*/
             fclose(file);   //ファイルを閉じて
             return; //終了
         }else{  /*データがあったなら*/
-            insert_linkend(id,linked);  //それを追加して読み込みを続ける
+            insert_linkend(page_id,classified);  //それを追加して読み込みを続ける
         }
     }
 }
@@ -121,6 +111,44 @@ void read_pagefile(char *filename){ /*ファイルからページ情報を読み
     
 }
 
+void QSort(int x[ ], int left, int right)
+{
+    int i, j;
+    int pivot;
+    
+    i = left;                      /* ソートする配列の一番小さい要素の添字 */
+    j = right;                     /* ソートする配列の一番大きい要素の添字 */
+    
+    pivot = x[(left + right) / 2]; /* 基準値を配列の中央付近にとる */
+    
+    while (1) {                    /* 無限ループ */
+        
+        while (x[i] < pivot)       /* pivot より大きい値が */
+            i++;                   /* 出るまで i を増加させる */
+        
+        while (pivot < x[j])       /* pivot より小さい値が */
+            j--;                   /*  出るまで j を減少させる */
+        if (i >= j)                /* i >= j なら */
+            break;                 /* 無限ループから抜ける */
+        
+        int temp;
+        
+        temp = x[i];
+        x[i] = x[j];
+        x[j] = temp;               /* x[i] と x[j]を交換 */
+        
+        i++;                       /* 次のデータ */
+        j--;
+    }
+   
+    
+    if (left < i - 1)              /* 基準値の左に 2 以上要素があれば */
+        QSort(x, left, i - 1);     /* 左の配列を Q ソートする */
+    if (j + 1 <  right)            /* 基準値の右に 2 以上要素があれば */
+        QSort(x, j + 1, right);    /* 右の配列を Q ソートする */
+}
+
+
 
 int main(void){
     double begin = get_time();
@@ -129,25 +157,47 @@ int main(void){
     m=-1;   //table2[0]からデータを入れるために-1に初期化
     read_pagefile("/Users/liupeijie/kadai3/category/category/cats.txt"); //ページ情報を読み込む
     int i;
-    for(i=1;i<SIZE1;i++){   /*全てのリンク関係について*/
+    for(i=0;i<SIZE1;i++){   /*全てのリンク関係について*/
         
         num_classified[table1[i].classified]+=1;    //カテゴリの中の数を数える
         
     }
-   // printf("%d",i);
-    int max=0;
-    int id = 0;
-    for(i=1;i<SIZE2;i++){
-        if(max<num_classified[i] ){
-            max=num_classified[i];
-            id=i;
-         //   printf("%d\n",i);
+    int j,dumy,k,rank;
+    int count=0;
+    int a[5000];
+    int id[SIZE2];
+    for(i=0;i<SIZE2;i++){ //for all pages
+        if(num_classified[i]>500){
+            a[count]=num_classified[i];
+            id[count]=i;
+            count+=1;
+            printf("%s:%d\n",table2[i].name,num_classified[i]);
+
+       }
+    }
+    for(i = 0; i < count; i++){
+        for(j = i + 1; j < count; j++){
+            if(a[i] < a[j]){
+                dumy = a[i];
+                a[i] = a[j];
+                a[j] = dumy;
+                dumy = id[i];
+                id[i] = id[j];
+                id[j] = dumy;
+               
+            }
         }
     }
-    for(i=1;i<SIZE2;i++){
-       // printf("id is %d:%d %s\n",i,table2[i-1].classified,table2[i-1].name);
+    for(i=0;i<20;i++){
+        k=id[i];
+        rank=i;
+        printf("rank%d ",rank+1);
+        printf("%s、数は：%d\n",table2[k].name,a[i]);
     }
-   printf("top is %d:%s\n",id,table2[id].name);
+
+  //  }
+   
+  // printf("top is %d:%s,数：%d\n",id,table2[id].name,num_classified[id]);
     double end = get_time();
-    printf("time: %.6lf sec\n", end - begin);
+    printf("programing running time: %.6lf sec\n", end - begin);
 }
